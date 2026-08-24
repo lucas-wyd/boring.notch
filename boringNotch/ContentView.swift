@@ -22,6 +22,7 @@ struct ContentView: View {
     private let batteryModel = BatteryStatusViewModel.shared
 
     @State private var closedSnapshotRevision = 0
+    @ObservedObject private var dailyPlanningManager = DailyPlanningManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var suppressHoverExpansion = false
@@ -48,16 +49,21 @@ struct ContentView: View {
     private let zeroHeightHoverPadding: CGFloat = 10
 
     private func topCornerRadius(for snapshot: ClosedNotchRenderSnapshot?) -> CGFloat {
-        snapshot?.topCornerRadius ?? cornerRadiusInsets.opened.top
+        if isShowingPendingWorkflowNotification {
+            return 12
+        }
+        return snapshot?.topCornerRadius ?? cornerRadiusInsets.opened.top
     }
 
     private func currentNotchShape(for snapshot: ClosedNotchRenderSnapshot?) -> NotchShape {
-        snapshot?.notchShape ?? NotchShape(
+        if isShowingPendingWorkflowNotification {
+            return NotchShape(topCornerRadius: 12, bottomCornerRadius: 12)
+        }
+        return snapshot?.notchShape ?? NotchShape(
             topCornerRadius: cornerRadiusInsets.opened.top,
             bottomCornerRadius: cornerRadiusInsets.opened.bottom
         )
     }
-
     // If the closed notch height is 0 (any display/setting), display a 10pt nearly-invisible notch
     // instead of fully hiding it. This preserves layout while avoiding visual artifacts.
     private var isNotchHeightZero: Bool { vm.effectiveClosedNotchHeight == 0 }
@@ -123,6 +129,50 @@ struct ContentView: View {
         return ClosedNotchRenderSnapshot(context: context)
     }
 
+    private var isShowingPendingWorkflowNotification: Bool {
+        DailyWorkflowPresentationPolicy.shouldShowPendingPrompt(
+            hasPendingSession: dailyPlanningManager.isAwaitingPresentation,
+            isNotchClosed: vm.notchState == .closed,
+            isClosedOSDVisible: isShowingClosedNotchOSD,
+            isPowerNotificationVisible: isShowingPowerNotification,
+            isGreetingAnimationVisible: coordinator.helloAnimationRunning
+        )
+    }
+
+    private var isShowingClosedNotchOSD: Bool {
+        guard
+            vm.notchState == .closed,
+            coordinator.shouldShowSneakPeek(on: vm.screenUUID)
+        else {
+            return false
+        }
+
+        let type = coordinator.sneakPeekState(for: vm.screenUUID).type
+        return type != .music && type != .battery
+    }
+
+    private var isShowingPowerNotification: Bool {
+        coordinator.expandingView.type == .battery
+            && coordinator.expandingView.show
+            && vm.notchState == .closed
+            && Defaults[.showPowerStatusNotifications]
+    }
+
+    private func horizontalChromeInset(for snapshot: ClosedNotchRenderSnapshot?) -> CGFloat {
+        if isShowingPendingWorkflowNotification {
+            return cornerRadiusInsets.closed.bottom
+        }
+        return snapshot?.presentation.metrics.horizontalChromeInset
+            ?? cornerRadiusInsets.opened.top
+    }
+
+    private func chinWidth(for snapshot: ClosedNotchRenderSnapshot?) -> CGFloat {
+        if isShowingPendingWorkflowNotification {
+            return (vm.hasNotch ? vm.closedNotchSize.width + 10 : 0) + 236
+        }
+        return snapshot?.presentation.metrics.totalWidth ?? vm.closedNotchSize.width
+    }
+
     var body: some View {
         @Bindable var dropInteraction = vm.dropInteraction
 
@@ -135,14 +185,14 @@ struct ContentView: View {
                     .frame(alignment: .top)
                     .padding(
                         .horizontal,
-                        closedSnapshot?.presentation.metrics.horizontalChromeInset
-                            ?? cornerRadiusInsets.opened.top
+                        horizontalChromeInset(for: closedSnapshot)
                     )
                     .padding([.horizontal, .bottom], vm.notchState == .open ? 12 : 0)
                     .background(.black)
                     .clipShape(currentNotchShape(for: closedSnapshot))
                     .overlay(alignment: .top) {
-                        closedSnapshot?.displayHeight.isZero == true ? nil
+                        closedSnapshot?.displayHeight.isZero == true
+                            && !isShowingPendingWorkflowNotification ? nil
                             : Rectangle()
                                 .fill(.black)
                                 .frame(height: 1)
@@ -152,7 +202,10 @@ struct ContentView: View {
                         color: ((vm.notchState == .open || isHovering) && Defaults[.enableShadow])
                             ? .black.opacity(0.7) : .clear, radius: 6
                     )
-                    .opacity((isNotchHeightZero && vm.notchState == .closed) ? 0.01 : 1)
+                    .opacity(
+                        (isNotchHeightZero && vm.notchState == .closed
+                            && !dailyPlanningManager.isAwaitingPresentation) ? 0.01 : 1
+                    )
                 
                 mainLayout
                     .frame(height: vm.notchState == .open ? vm.notchSize.height : nil)
@@ -172,9 +225,8 @@ struct ContentView: View {
                     }
                     .onTapGesture {
                         guard vm.notchState == .closed else { return }
-                        if closedSnapshot?.opensNotchOnTap ?? true {
-                            doOpen()
-                        }
+                        guard closedSnapshot?.opensNotchOnTap ?? true else { return }
+                        _ = doOpen(activatingPendingWorkflow: true)
                     }
                     .conditionalModifier(Defaults[.enableGestures]) { view in
                         view
@@ -228,15 +280,15 @@ struct ContentView: View {
                         .keyboardShortcut(KeyEquivalent(","), modifiers: .command)
                     }
                 if vm.chinHeight > 0 {
-                    Rectangle()
-                        .fill(Color.black.opacity(0.01))
-                        .frame(
-                            width: closedSnapshot?.presentation.metrics.totalWidth
-                                ?? vm.closedNotchSize.width,
+                        Rectangle()
+                            .fill(Color.black.opacity(0.01))
+                            .frame(
+                            width: chinWidth(for: closedSnapshot),
                             height: vm.chinHeight
                         )
                 }
             }
+            .animation(StandardAnimations.open, value: isShowingPendingWorkflowNotification)
         }
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
@@ -304,18 +356,37 @@ struct ContentView: View {
                     Spacer()
                     HelloAnimation(onFinish: {
                         vm.closeHello()
-                    }).frame(
+                    })
+                    .frame(
                         width: getClosedNotchSize().width,
                         height: 80
                     )
                     .padding(.top, 40)
                     Spacer()
+                } else if isShowingPendingWorkflowNotification,
+                          codexNotifications.visibleNotification == nil,
+                          let session = dailyPlanningManager.pendingSession {
+                    DailyWorkflowNotificationView(
+                        session: session,
+                        notchWidth: vm.hasNotch ? vm.closedNotchSize.width + 10 : 0,
+                        height: max(32, displayClosedNotchHeight)
+                    )
+                    .transition(
+                        .opacity
+                            .combined(with: .scale(scale: 0.94, anchor: .top))
+                            .combined(with: .move(edge: .top))
+                    )
                 } else if let closedSnapshot {
                     ClosedNotchRenderer(
                         snapshot: closedSnapshot,
                         albumArtNamespace: albumArtNamespace,
                         onActivitySelect: handleClosedActivitySelection
                     )
+                } else if vm.notchState == .open
+                            && (dailyPlanningManager.isPresenting
+                                || dailyPlanningManager.isFinishingSession) {
+                    Color.clear
+                        .frame(height: max(24, displayClosedNotchHeight))
                 } else if !isPresentingCodexPermission {
                     BoringHeader()
                         .frame(height: max(24, displayClosedNotchHeight))
@@ -329,16 +400,23 @@ struct ContentView: View {
             .zIndex(1)
 
             if vm.notchState == .open {
-                OpenNotchContentView(
-                    albumArtNamespace: albumArtNamespace,
-                    horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
-                    isHoveringMusicArea: $isHoveringMusicArea,
-                    gestureProgress: gestureProgress,
-                    permissionNotification: presentedCodexPermission
-                )
+                if coordinator.currentView == .dailyPlanning {
+                    DailyPlanningView()
+                } else {
+                    OpenNotchContentView(
+                        albumArtNamespace: albumArtNamespace,
+                        horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
+                        isHoveringMusicArea: $isHoveringMusicArea,
+                        gestureProgress: gestureProgress,
+                        permissionNotification: presentedCodexPermission
+                    )
+                }
             }
         }
-        .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $dropInteraction.generalDropTargeting))
+        .onDrop(
+            of: [.fileURL, .url, .utf8PlainText, .plainText, .data],
+            delegate: GeneralDropTargetDelegate(isTargeted: $dropInteraction.generalDropTargeting)
+        )
     }
 
     @ViewBuilder
@@ -363,11 +441,22 @@ struct ContentView: View {
     }
 
     @discardableResult
-    private func doOpen() -> Bool {
+    private func doOpen(activatingPendingWorkflow: Bool = false) -> Bool {
         var didOpen = false
         permissionCollapseTask?.cancel()
         permissionCollapseTask = nil
         withAnimation(animationSpring) {
+            if activatingPendingWorkflow,
+                isShowingPendingWorkflowNotification,
+                codexNotifications.visibleNotification == nil,
+                let screenUUID = vm.screenUUID
+            {
+                coordinator.selectedScreenUUID = screenUUID
+                if dailyPlanningManager.activatePendingSession() {
+                    coordinator.currentView = .dailyPlanning
+                }
+            }
+
             if let notification = codexNotifications.visibleNotification,
                notification.status == .needsAction(.permission) {
                 codexNotifications.presentPermissionDetail(for: notification)
@@ -425,9 +514,10 @@ struct ContentView: View {
                 haptics.toggle()
             }
             
+            let hasPendingWorkflow = isShowingPendingWorkflowNotification
             let shouldExpand = extensionAllowsExpansion ?? Defaults[.openNotchOnHover]
             guard vm.notchState == .closed,
-                  shouldExpand,
+                  (hasPendingWorkflow || shouldExpand),
                   !suppressHoverExpansion,
                   !coordinator.shouldShowSneakPeek(on: vm.screenUUID) else { return }
 
@@ -443,10 +533,12 @@ struct ContentView: View {
 
                 await MainActor.run {
                     guard self.vm.notchState == .closed,
-                          self.isHovering,
-                          !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID) else { return }
+                        self.isHovering,
+                        self.isShowingPendingWorkflowNotification
+                            || !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID)
+                    else { return }
                     
-                    self.doOpen()
+                    self.doOpen(activatingPendingWorkflow: true)
                 }
             }
         } else {
@@ -460,6 +552,7 @@ struct ContentView: View {
             && !isHovering
             && !vm.isBatteryPopoverActive
             && codexNotifications.submittingNotificationIDs.isEmpty
+            && !dailyPlanningManager.isFinishingSession
             && !SharingStateManager.shared.preventNotchClose
     }
 
@@ -479,6 +572,9 @@ struct ContentView: View {
                 if isPresentingCodexPermission {
                     collapseCodexPermission()
                 } else {
+                    if dailyPlanningManager.isPresenting {
+                        dailyPlanningManager.returnActiveSessionToPrompt()
+                    }
                     vm.close()
                 }
             }
@@ -506,13 +602,14 @@ struct ContentView: View {
             withAnimation(animationSpring) {
                 gestureProgress = .zero
             }
-            doOpen()
+            doOpen(activatingPendingWorkflow: true)
         }
     }
 
     private func handleUpGesture(translation: CGFloat, phase: NSEvent.Phase) {
         guard !isPresentingCodexPermission,
               vm.notchState == .open,
+              coordinator.currentView != .dailyPlanning,
               !vm.isHoveringCalendar else { return }
 
         withAnimation(animationSpring) {

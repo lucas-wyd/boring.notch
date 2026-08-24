@@ -30,6 +30,8 @@ struct OpenNotchContentView: View {
                     )
                 case .shelf:
                     ShelfView()
+                case .dailyPlanning:
+                    EmptyView()
                 case nil:
                     EmptyView()
                 }

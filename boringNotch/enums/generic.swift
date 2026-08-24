@@ -21,6 +21,7 @@ public enum NotchState {
 public enum NotchViews: Hashable {
     case home
     case shelf
+    case dailyPlanning
 }
 
 enum DownloadIndicatorStyle: String, Defaults.Serializable {

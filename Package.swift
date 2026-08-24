@@ -3,10 +3,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "BoringNotchCodexNotifications",
+    name: "BoringNotchFeatures",
     platforms: [.macOS(.v14)],
     products: [
-        .library(name: "CodexNotificationsCore", targets: ["CodexNotificationsCore"])
+        .library(name: "CodexNotificationsCore", targets: ["CodexNotificationsCore"]),
+        .library(name: "DailyPlanningCore", targets: ["DailyPlanningCore"]),
     ],
     targets: [
         .target(
@@ -23,14 +24,19 @@ let package = Package(
             name: "CodexNotificationsCore",
             path: "boringNotch/features/CodexNotifications/Core"
         ),
+        .target(
+            name: "DailyPlanningCore",
+            path: "boringNotch/features/DailyPlanning/Core"
+        ),
         .testTarget(
-            name: "CodexNotificationsCoreTests",
+            name: "BoringNotchFeatureTests",
             dependencies: [
                 "CodexNotificationsCore",
                 "CodexHookSupport",
                 "CodexHookTrustState",
+                "DailyPlanningCore",
             ],
             path: "boringNotchTests"
-        )
+        ),
     ]
 )

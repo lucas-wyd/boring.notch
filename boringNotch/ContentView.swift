@@ -298,7 +298,10 @@ struct ContentView: View {
     private func notchLayout(closedSnapshot: ClosedNotchRenderSnapshot?) -> some View {
         @Bindable var dropInteraction = vm.dropInteraction
 
-        VStack(alignment: .leading) {
+        VStack(
+            alignment: .leading,
+            spacing: presentedCodexPermission == nil ? nil : 0
+        ) {
             VStack(alignment: .leading) {
                 if coordinator.helloAnimationRunning {
                     Spacer()

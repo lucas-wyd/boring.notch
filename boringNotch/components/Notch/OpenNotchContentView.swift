@@ -12,6 +12,11 @@ struct OpenNotchContentView: View {
     let gestureProgress: CGFloat
     let permissionNotification: CodexJobNotification?
 
+    private var permissionTopInset: CGFloat {
+        let screen = vm.screenUUID.flatMap { NSScreen.screen(withUUID: $0) } ?? NSScreen.main
+        return max(0, screen?.safeAreaInsets.top ?? 0)
+    }
+
     var body: some View {
         VStack {
             if let permissionNotification {
@@ -19,7 +24,9 @@ struct OpenNotchContentView: View {
                     notification: permissionNotification
                 )
                 .frame(maxWidth: .infinity, alignment: .topLeading)
-                .frame(height: Self.permissionViewportHeight, alignment: .topLeading)
+                .frame(height: max(0, Self.permissionViewportHeight - permissionTopInset), alignment: .topLeading)
+                .clipped()
+                .padding(.top, permissionTopInset)
             } else {
                 switch selectedDestination {
                 case .home:

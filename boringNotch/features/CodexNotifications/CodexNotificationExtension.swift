@@ -233,7 +233,6 @@ private struct CodexClosedNotchPrompt: View {
 
 struct CodexPermissionApprovalView: View {
     private static let disclosureCharacterLimit = 140
-    private static let viewportHeight = max(0, openNotchSize.height - 12)
 
     let notification: CodexJobNotification
 
@@ -289,8 +288,7 @@ struct CodexPermissionApprovalView: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 10)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(height: Self.viewportHeight, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Codex permission request")
     }

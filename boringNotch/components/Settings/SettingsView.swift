@@ -10,7 +10,7 @@ import Sparkle
 import SwiftUI
 import SwiftUIIntrospect
 
-private enum SettingsTab: String, CaseIterable, Identifiable {
+enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case appearance
     case media
@@ -64,8 +64,13 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     }
 }
 
+final class SettingsNavigation: ObservableObject {
+    static let shared = SettingsNavigation()
+    @Published var selectedTab: SettingsTab = .general
+}
+
 struct SettingsView: View {
-    @State private var selectedTab: SettingsTab = .general
+    @ObservedObject private var navigation = SettingsNavigation.shared
     @State private var accentColorUpdateTrigger = UUID()
 
     let updaterController: SPUStandardUpdaterController?
@@ -76,7 +81,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedTab) {
+            List(selection: $navigation.selectedTab) {
                 ForEach(SettingsTab.allCases) { tab in
                     Group {
                         if tab == .codex {
@@ -98,7 +103,7 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(200)
         } detail: {
             Group {
-                switch selectedTab {
+                switch navigation.selectedTab {
                 case .general:
                     GeneralSettings()
                 case .appearance:

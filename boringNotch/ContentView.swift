@@ -556,6 +556,7 @@ struct ContentView: View {
             && !vm.isBatteryPopoverActive
             && codexNotifications.submittingNotificationIDs.isEmpty
             && !dailyPlanningManager.isFinishingSession
+            && !dailyPlanningManager.isSavingConclusion
             && !SharingStateManager.shared.preventNotchClose
     }
 

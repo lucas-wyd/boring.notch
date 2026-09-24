@@ -20,6 +20,9 @@
 		C30000012F00000100000001 /* ClosedNotchLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30000032F00000100000003 /* ClosedNotchLayout.swift */; };
 		C30000022F00000100000002 /* OpenNotchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30000042F00000100000004 /* OpenNotchContentView.swift */; };
 		C20000012F00000100000001 /* ClosedNotchPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000022F00000100000002 /* ClosedNotchPresentation.swift */; };
+		DA1200052F60000000000001 /* DailyPlanningSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1200062F60000000000002 /* DailyPlanningSettingsView.swift */; };
+		DA1200032F60000000000001 /* DailyConclusionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1200042F60000000000002 /* DailyConclusionView.swift */; };
+		DA1200012F60000000000001 /* DailyConclusionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1200022F60000000000002 /* DailyConclusionStore.swift */; };
 		DA1100012F60000000000001 /* DailyPlanningCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1100022F60000000000002 /* DailyPlanningCore.swift */; };
 		DA1100032F60000000000003 /* DailyPlanningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1100042F60000000000004 /* DailyPlanningManager.swift */; };
 		DA1100052F60000000000005 /* DailyPlanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1100062F60000000000006 /* DailyPlanningView.swift */; };
@@ -227,6 +230,9 @@
 		C30000032F00000100000003 /* ClosedNotchLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClosedNotchLayout.swift; sourceTree = "<group>"; };
 		C30000042F00000100000004 /* OpenNotchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenNotchContentView.swift; sourceTree = "<group>"; };
 		C20000022F00000100000002 /* ClosedNotchPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClosedNotchPresentation.swift; sourceTree = "<group>"; };
+		DA1200062F60000000000002 /* DailyPlanningSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPlanningSettingsView.swift; sourceTree = "<group>"; };
+		DA1200042F60000000000002 /* DailyConclusionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyConclusionView.swift; sourceTree = "<group>"; };
+		DA1200022F60000000000002 /* DailyConclusionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyConclusionStore.swift; sourceTree = "<group>"; };
 		DA1100022F60000000000002 /* DailyPlanningCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPlanningCore.swift; sourceTree = "<group>"; };
 		DA1100042F60000000000004 /* DailyPlanningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPlanningManager.swift; sourceTree = "<group>"; };
 		DA1100062F60000000000006 /* DailyPlanningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPlanningView.swift; sourceTree = "<group>"; };
@@ -430,6 +436,8 @@
 				DA11000A2F6000000000000A /* DailyReminderService.swift */,
 				DA1100042F60000000000004 /* DailyPlanningManager.swift */,
 				DA1100062F60000000000006 /* DailyPlanningView.swift */,
+				DA1200062F60000000000002 /* DailyPlanningSettingsView.swift */,
+				DA1200042F60000000000002 /* DailyConclusionView.swift */,
 			);
 			path = "features/DailyPlanning";
 			sourceTree = "<group>";
@@ -438,6 +446,7 @@
 			isa = PBXGroup;
 			children = (
 				DA1100022F60000000000002 /* DailyPlanningCore.swift */,
+				DA1200022F60000000000002 /* DailyConclusionStore.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -1074,6 +1083,9 @@
 				C30000022F00000100000002 /* OpenNotchContentView.swift in Sources */,
 				C20000012F00000100000001 /* ClosedNotchPresentation.swift in Sources */,
 				DA1100012F60000000000001 /* DailyPlanningCore.swift in Sources */,
+				DA1200052F60000000000001 /* DailyPlanningSettingsView.swift in Sources */,
+				DA1200032F60000000000001 /* DailyConclusionView.swift in Sources */,
+				DA1200012F60000000000001 /* DailyConclusionStore.swift in Sources */,
 				DA1100092F60000000000009 /* DailyReminderService.swift in Sources */,
 				DA1100032F60000000000003 /* DailyPlanningManager.swift in Sources */,
 				DA1100052F60000000000005 /* DailyPlanningView.swift in Sources */,

@@ -189,7 +189,7 @@ class BoringViewModel: NSObject, ObservableObject {
         // Every opening route belongs to the pending/active workflow, regardless
         // of which part of the notch was entered or which tab closing selected.
         let workflow = DailyPlanningManager.shared
-        if workflow.isAwaitingPresentation {
+        if workflow.isAwaitingPresentation, CodexNotificationManager.shared.visibleNotification == nil {
             if let screenUUID { coordinator.selectedScreenUUID = screenUUID }
             workflow.activatePendingSession(requestPresentation: false)
         }

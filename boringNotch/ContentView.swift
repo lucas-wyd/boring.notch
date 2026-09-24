@@ -208,7 +208,7 @@ struct ContentView: View {
                     )
                 
                 mainLayout
-                    .frame(height: vm.notchState == .open ? vm.notchSize.height : nil)
+                    .frame(height: vm.notchState == .open ? vm.notchSize.height : nil, alignment: .top)
                     .animation(
                         vm.notchState == .open
                             ? StandardAnimations.open
@@ -374,11 +374,7 @@ struct ContentView: View {
                         notchWidth: vm.hasNotch ? vm.closedNotchSize.width + 10 : 0,
                         height: max(32, displayClosedNotchHeight)
                     )
-                    .transition(
-                        .opacity
-                            .combined(with: .scale(scale: 0.94, anchor: .top))
-                            .combined(with: .move(edge: .top))
-                    )
+                    .transition(.opacity)
                 } else if let closedSnapshot {
                     ClosedNotchRenderer(
                         snapshot: closedSnapshot,
@@ -403,7 +399,8 @@ struct ContentView: View {
             .zIndex(1)
 
             if vm.notchState == .open {
-                if coordinator.currentView == .dailyPlanning {
+                if (dailyPlanningManager.isPresenting || dailyPlanningManager.isFinishingSession)
+                    && !isPresentingCodexPermission {
                     DailyPlanningView()
                 } else {
                     OpenNotchContentView(

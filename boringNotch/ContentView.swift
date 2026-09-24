@@ -226,7 +226,7 @@ struct ContentView: View {
                     .onTapGesture {
                         guard vm.notchState == .closed else { return }
                         guard closedSnapshot?.opensNotchOnTap ?? true else { return }
-                        _ = doOpen(activatingPendingWorkflow: true)
+                        _ = doOpen()
                     }
                     .conditionalModifier(Defaults[.enableGestures]) { view in
                         view
@@ -444,22 +444,11 @@ struct ContentView: View {
     }
 
     @discardableResult
-    private func doOpen(activatingPendingWorkflow: Bool = false) -> Bool {
+    private func doOpen() -> Bool {
         var didOpen = false
         permissionCollapseTask?.cancel()
         permissionCollapseTask = nil
         withAnimation(animationSpring) {
-            if activatingPendingWorkflow,
-                isShowingPendingWorkflowNotification,
-                codexNotifications.visibleNotification == nil,
-                let screenUUID = vm.screenUUID
-            {
-                coordinator.selectedScreenUUID = screenUUID
-                if dailyPlanningManager.activatePendingSession() {
-                    coordinator.currentView = .dailyPlanning
-                }
-            }
-
             if let notification = codexNotifications.visibleNotification,
                notification.status == .needsAction(.permission) {
                 codexNotifications.presentPermissionDetail(for: notification)
@@ -537,11 +526,12 @@ struct ContentView: View {
                 await MainActor.run {
                     guard self.vm.notchState == .closed,
                         self.isHovering,
-                        self.isShowingPendingWorkflowNotification
+                        self.dailyPlanningManager.isAwaitingPresentation
+                            || self.dailyPlanningManager.isPresenting
                             || !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID)
                     else { return }
                     
-                    self.doOpen(activatingPendingWorkflow: true)
+                    self.doOpen()
                 }
             }
         } else {
@@ -606,7 +596,7 @@ struct ContentView: View {
             withAnimation(animationSpring) {
                 gestureProgress = .zero
             }
-            doOpen(activatingPendingWorkflow: true)
+            doOpen()
         }
     }
 

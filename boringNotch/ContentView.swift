@@ -211,6 +211,11 @@ struct ContentView: View {
                 
                 mainLayout
                     .frame(height: vm.notchState == .open ? vm.notchSize.height : nil, alignment: .top)
+                    .background {
+                        if isPresentingResponse {
+                            CodexResponseOutsideClick(onOutsideClick: collapseCodexDetail)
+                        }
+                    }
                     .animation(
                         vm.notchState == .open
                             ? StandardAnimations.open
